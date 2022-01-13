@@ -1,49 +1,36 @@
 <template>
-  <div>
-    <span
-      ><button
-        v-if="!accountName"
-        type="button"
-        class="
-          black--text
-          font-weight-black
-          mx-1
-          v-btn v-btn--is-elevated v-btn--has-bg
-          theme--dark
-          v-size--x-small
-          white
-        "
-        @click="CallLogin"
-      >
-        <span class="v-btn__content"
-          ><div
-            class="v-image v-responsive mx-1 theme--dark"
-            style="max-height: 20px; max-width: 50px"
+  <div class="w-full min-h-screen bg-gray-200 p-2">
+    <button @click="CallLogin" v-if="!accountName">Login in</button>
+    <span>{{ accountName }}</span>
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-7">
+      <div v-for="(finish, index) in finishIds" :key="index" class="m-2">
+        <div class="border rounded-xl shadow-lg p-4 bg-white">
+          <div>AssetID: {{ finish.asset_id }}</div>
+          <div>Reward: {{ Fix2(finish.reward) }}</div>
+          <div>Fee: {{ FindTime(finish.finish_time).toFixed(2) }}%</div>
+          <button
+            class="
+              py-2
+              px-4
+              mt-2
+              w-full
+              transition-colors
+              duration-700
+              transform
+              bg-indigo-500
+              text-xs
+              hover:bg-blue-400
+              text-gray-100 text-lg
+              rounded-lg
+              focus:border-4
+              border-indigo-300
+            "
+            @click="ClaimReward(finish.finish_id, 'claimreward')"
           >
-            <div
-              class="v-responsive__sizer"
-              style="padding-bottom: 35.5%"
-            ></div>
-            <div
-              class="v-image__image v-image__image--cover"
-              style="
-                background-image: url('https://legacy.wax.io/uploads/press-assets/wax-primary-logo.png');
-                background-position: center;
-              "
-            ></div>
-            <div class="v-responsive__content" style="width: 800px"></div>
-          </div>
-          Login
-        </span>
-      </button>
-      <div v-else>{{ accountName }}</div>
-    </span>
-    <div v-for="(finish, index) in finishIds" :key="index">
-      <div>
-        AssetID: {{ finish.asset_id }} Reward: {{ finish.reward }} Fee:
-        {{ FindTime(finish.finish_time).toFixed(2) }}%
+            Claim
+          </button>
+        </div>
       </div>
-      <button @click="ClaimReward(finish.finish_id)">claim</button>
     </div>
   </div>
 </template>
@@ -68,6 +55,11 @@ export default {
     };
   },
   methods: {
+    Fix2(value) {
+      if (value) {
+        return parseInt(value).toFixed(2);
+      }
+    },
     async CallLogin() {
       this.accountName = await wax.login();
       this.pubKey = wax.pubKeys;
@@ -177,14 +169,13 @@ export default {
         if (assetID != 0) {
           url = "https://aa.dapplica.io/atomicassets/v1/assets/";
           this.$axios.get(url.concat(assetID)).then((response) => {
-            if (response.data.owner  == accountName) {
-            assets.push({
-              id: response.data.asset_id,
-              object: response.data.data,
-            });
+            if (response.data.owner == accountName) {
+              assets.push({
+                id: response.data.asset_id,
+                object: response.data.data,
+              });
             }
-         });
-          
+          });
         }
       }
     },
@@ -192,24 +183,36 @@ export default {
       var now = moment().format("X");
       return (((432000 - (now - timeUnix)) / 432000) * 100) / 2;
     },
-    async ClaimReward(taskID) {
+    async ClaimReward(taskID, task) {
       try {
+        let data = {
+          player: this.accountName,
+        };
+
+        if (task === "claimreward") {
+          Object.assign(data, {
+            finish_id: taskID,
+          });
+        } else {
+          Object.assign(data, {
+            asset_id: taskID,
+            task_id: 2,
+          });
+        }
+
         const result = await wax.api.transact(
           {
             actions: [
               {
                 account: "officegameio",
-                name: "claimreward",
+                name: task,
                 authorization: [
                   {
                     actor: this.accountName,
                     permission: "active",
                   },
                 ],
-                data: {
-                  finish_id: taskID,
-                  player: this.accountName,
-                },
+                data,
               },
             ],
           },

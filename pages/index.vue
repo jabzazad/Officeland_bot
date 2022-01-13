@@ -177,14 +177,13 @@ export default {
         if (assetID != 0) {
           url = "https://aa.dapplica.io/atomicassets/v1/assets/";
           this.$axios.get(url.concat(assetID)).then((response) => {
-            if (response.data.owner  == accountName) {
-            assets.push({
-              id: response.data.asset_id,
-              object: response.data.data,
-            });
+            if (response.data.owner == accountName) {
+              assets.push({
+                id: response.data.asset_id,
+                object: response.data.data,
+              }); 
             }
-         });
-          
+          });
         }
       }
     },

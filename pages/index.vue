@@ -60,7 +60,7 @@
             <div>AssetID: {{ finish.asset_id }}</div>
             <div>Reward: {{ Fix2(finish.reward) }}</div>
             <div>
-              Fee: {{ FindTime(finish.finish_time, finish).toFixed(2) }}%
+              <!-- Fee: {{ FindTime(finish.finish_time, finish).toFixed(2) }}% -->
             </div>
             <button
               class="
@@ -256,23 +256,23 @@ export default {
           }
         }
         if (!isFound) {
-          let taskID = 2;
+          let taskID = 0
           switch (this.asset.object.data.rarity) {
             case "junior":
-              this.taskID = 3;
+              taskID = 3;
               break;
             case "senior":
-              this.taskID = 4;
+              taskID = 4;
               break;
             case "leader":
-              this.taskID = 5;
+              taskID = 5;
               break;
             case "manager":
-              this.taskID = 6;
+              taskID = 6;
               break;
           }
           setTimeout(() => {
-            this.Working(this.asset.id, "assigntask", this.taskID);
+            this.Working(this.asset.id, "assigntask", taskID);
           }, 500);
         }
       }
@@ -290,9 +290,13 @@ export default {
         });
     },
     calculateTime(worker) {
-      let now = moment().format("X");
 
-      if (worker.taskEnd - now <= 0) {
+    let worktime =   (moment.unix(worker.taskEnd).format("DD/MM/YYYY HH:mm:ss"))
+    let timenow = moment().format("DD/MM/YYYY HH:mm:ss")
+    var ms = moment(worktime,"DD/MM/YYYY HH:mm:ss").diff(moment(timenow,"DD/MM/YYYY HH:mm:ss"));
+    var d = moment.duration(ms).asMinutes()
+
+      if (d <= 0) {
         setTimeout(() => {
           this.Working(worker.taskAssignID, "taskfinished");
         }, 4000);
@@ -365,6 +369,7 @@ export default {
       return (((432000 - (now - timeUnix)) / 432000) * 100) / 2;
     },
     async Working(id, task, taskID) {
+      console.log(id, task, taskID);
       this.breaker++;
       try {
         let data = {
@@ -389,6 +394,8 @@ export default {
             });
             break;
         }
+
+        console.log(data);
 
         const result = await wax.api.transact(
           {

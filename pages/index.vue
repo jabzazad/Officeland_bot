@@ -60,7 +60,7 @@
             <div>AssetID: {{ finish.asset_id }}</div>
             <div>Reward: {{ Fix2(finish.reward) }}</div>
             <div>
-              <!-- Fee: {{ FindTime(finish.finish_time, finish).toFixed(2) }}% -->
+              Fee: {{ FindTime(finish.finish_time, finish).toFixed(2) }}%
             </div>
             <button
               class="
@@ -290,19 +290,15 @@ export default {
         });
     },
     calculateTime(worker) {
+    let timenow = moment().format("X")
 
-    let worktime =   (moment.unix(worker.taskEnd).format("DD/MM/YYYY HH:mm:ss"))
-    let timenow = moment().format("DD/MM/YYYY HH:mm:ss")
-    var ms = moment(worktime,"DD/MM/YYYY HH:mm:ss").diff(moment(timenow,"DD/MM/YYYY HH:mm:ss"));
-    var d = moment.duration(ms).asMinutes()
-
-      if (d <= 0) {
+      if ((worker.taskEnd - timenow) <= 0) {
         setTimeout(() => {
           this.Working(worker.taskAssignID, "taskfinished");
         }, 4000);
       }
 
-      return worker.taskEnd - now;
+      return worker.taskEnd - timenow;
     },
     convertHMS(value) {
       const sec = parseInt(value, 10); // convert value to number if it's string
@@ -359,7 +355,8 @@ export default {
       }
     },
     FindTime(timeUnix, finish) {
-      var now = moment().format("X");
+     let now = moment().format("X");
+      console.log("test now:",now)
       if ((((432000 - (now - timeUnix)) / 432000) * 100) / 2 <= 0) {
         setTimeout(() => {
           this.Working(finish.finish_id, "claimreward", 0);
